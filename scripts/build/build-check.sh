@@ -1,28 +1,27 @@
-# build-check.sh
+PKGNAME=check
+PKGVER=0.10.0
+TAREXT=gz
 
-SRCDIR=check-0.10.0
+source $BUILD/dosetup.sh
 
-# tar -zxvf check-0.10.0.tar.gz
+source $BUILD/dotar.sh
 
-cd $SRCDIR
+echo 'CONFIG'
 
-PKG_CONFIG= ./configure --prefix=/tools
+./configure --prefix=/tools \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-make 
+echo 'MAKE'
 
-make check
+make 1> $MAKELOG 2> $MAKEERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE CHECK'
 
-make install
+make check 1> $TESTLOG 2> $TESTERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f $SRCDIR
+make install 1> $INSTALLLOG 2> $INSTALLERR
+
+source $BUILD/docleanup.sh
 

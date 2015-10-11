@@ -1,39 +1,37 @@
 PKGNAME=gettext
 PKGVER=0.19.5.1
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.xz
+TAREXT=xz
 
-# -z for .gz
-# tar -zxvf $TARFILE
+source $BUILD/dosetup.sh
 
-# -J for .xz
-# tar -Jxvf $TARFILE
-
-cd $SRCDIR
+source $BUILD/dotar.sh
 
 cd gettext-tools
 
-# EMACS="no" ./configure --prefix=/tools --disable-shared
 
-make -C gnulib-lib
-make -C intl pluralx.c
-make -C src msgfmt
-make -C src msgmerge
-make -C src xgettext
+echo 'CONFIG'
 
-cp -v src/{msgfmt,msgmerge,xgettext} /tools/bin
+EMACS="no" ./configure --prefix=/tools --disable-shared \
+            1> ../$CONFIGLOG 2> ../$CONFIGERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE'
+
+make -C gnulib-lib 1> ../$MAKELOG 2> ../$MAKEERR
+make -C intl pluralx.c 1>> ../$MAKELOG 2>> ../$MAKEERR
+make -C src msgfmt 1>> ../$MAKELOG 2>> ../$MAKEERR
+make -C src msgmerge 1>> ../$MAKELOG 2>> ../$MAKEERR
+make -C src xgettext 1>> ../$MAKELOG 2>> ../$MAKEERR
+
+#echo 'MAKE TESTS'
+
+#make check 1> $TESTLOG 2> $TESTERR
+
+echo 'MAKE INSTALL'
+
+#make install 1> $INSTALLLOG 2> $INSTALLERR
+
+cp -v src/{msgfmt,msgmerge,xgettext} /tools/bin 1> ../$INSTALLLOG 2> ../$INSTALLERR
 
 cd ..
 
-cd ..
-
-rm -r -f $SRCDIR
-
+source $BUILD/docleanup.sh

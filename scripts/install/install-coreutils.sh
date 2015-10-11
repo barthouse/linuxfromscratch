@@ -1,63 +1,73 @@
 PKGNAME=coreutils
 PKGVER=8.24
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-patch -Np1 -i ../coreutils-8.24-i18n-1.patch 
-sed -i '/tests\/misc\/sort.pl/ d' Makefile.in
+source $DIR/dotar.sh
+
+echo 'CONFIG'
+
+patch -Np1 -i ../coreutils-8.24-i18n-1.patch \
+    1> $CONFIGLOG 2> $CONFIGERR
+
+sed -i '/tests\/misc\/sort.pl/ d' Makefile.in \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
 FORCE_UNSAFE_CONFIGURE=1 ./configure \
             --prefix=/usr            \
-            --enable-no-install-program=kill,uptime
+            --enable-no-install-program=kill,uptime \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-make
+echo 'MAKE'
 
-make NON_ROOT_USERNAME=nobody check-root
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-echo "dummy:x:1000:nobody" >> /etc/group
+echo 'MAKE TESTS'
 
-chown -Rv nobody 
+make NON_ROOT_USERNAME=nobody check-root \
+    1> $TESTLOG 2> $TESTERR
+
+echo "dummy:x:1000:nobody" >> /etc/group \
+    1>> $TESTLOG 2>> $TESTERR
+
+chown -Rv nobody . \
+    1>> $TESTLOG 2>> $TESTERR
 
 su nobody -s /bin/bash \
-          -c "PATH=$PATH make RUN_EXPENSIVE_TESTS=yes check"
+          -c "PATH=$PATH make RUN_EXPENSIVE_TESTS=yes check" \
+    1>> $TESTLOG 2>> $TESTERR
 
-sed -i '/dummy/d' /etc/group
+sed -i '/dummy/d' /etc/group \
+    1>> $TESTLOG 2>> $TESTERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE INSTALL'
 
-make install
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
 
-mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin
-mv -v /usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm} /bin
-mv -v /usr/bin/{rmdir,stty,sync,true,uname} /bin
-mv -v /usr/bin/chroot /usr/sbin
-mv -v /usr/share/man/man1/chroot.1 /usr/share/man/man8/chroot.8
-sed -i s/\"1\"/\"8\"/1 /usr/share/man/man8/chroot.8
+mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
-mv -v /usr/bin/{head,sleep,nice,test,[} /bin
+mv -v /usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm} /bin \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
-cd ..
+mv -v /usr/bin/{rmdir,stty,sync,true,uname} /bin \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
-rm -r -f $SRCDIR
+mv -v /usr/bin/chroot /usr/sbin \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
+mv -v /usr/share/man/man1/chroot.1 /usr/share/man/man8/chroot.8 \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+sed -i s/\"1\"/\"8\"/1 /usr/share/man/man8/chroot.8 \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+mv -v /usr/bin/{head,sleep,nice,test,[} /bin \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

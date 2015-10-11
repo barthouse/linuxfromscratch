@@ -1,49 +1,46 @@
 PKGNAME=bash
 PKGVER=4.3.30
 TAREXT=gz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-patch -Np1 -i ../bash-4.3.30-upstream_fixes-2.patch
+source $DIR/dotar.sh
+
+echo 'PATCH'
+
+patch -Np1 -i ../bash-4.3.30-upstream_fixes-2.patch \
+    1> $PATCHLOG 2> $PATCHERR
+
+echo 'CONFIG'
 
 ./configure --prefix=/usr                       \
             --bindir=/bin                       \
             --docdir=/usr/share/doc/bash-4.3.30 \
             --without-bash-malloc               \
-            --with-installed-readline
-make
+            --with-installed-readline           \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-chown -Rv nobody .
+echo 'MAKE'
 
-su nobody -s /bin/bash -c "PATH=$PATH make tests"
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE TESTS'
 
-make install
+chown -Rv nobody . \
+    1> $TESTLOG 2> $TESTERR
 
-exec /bin/bash --login +h
+su nobody -s /bin/bash -c "PATH=$PATH make tests" \
+    1>> $TESTLOG 2>> $TESTERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f $SRCDIR
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+source $DIR/docleanup.sh
+
+echo 'You can now switch to new bash "exec /bin/bash --login +h"'
 

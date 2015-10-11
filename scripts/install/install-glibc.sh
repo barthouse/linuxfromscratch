@@ -1,73 +1,68 @@
 PKGNAME=glibc
 PKGVER=2.22
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") echo tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-          ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-#patch -Np1 -i ../glibc-2.22-fhs-1.patch
-#patch -Np1 -i ../glibc-2.22-upstream_i386_fix-1.patch
+source $DIR/dotar.sh
 
-#mkdir -v ../glibc-build
-cd ../glibc-build
+patch -Np1 -i ../glibc-2.22-fhs-1.patch 1> $PATCHLOG 2> $PATCHERR
 
-../glibc-2.22/configure --prefix=/usr --disable-profile \
-                        --enable-kernel=2.6.32 --enable-obsolete-rpc
+patch -Np1 -i ../glibc-2.22-upstream_i386_fix-1.patch 1> $PATCHLOG 2> $PATCHERR
 
-make
+mkdir -v ../glibc-install
+cd ../glibc-install
 
-make check
+echo 'CONFIG'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+../glibc-2.22/configure    \
+    --prefix=/usr          \
+    --disable-profile      \
+    --enable-kernel=2.6.32 \
+    --enable-obsolete-rpc  \
+            1> $CONFIGLOG 2> $CONFIGERR
+
+echo 'MAKE'
+
+make 1> $MAKELOG 2> $MAKEERR
+
+echo 'MAKE TESTS'
+
+make check 1> $TESTLOG 2> $TESTERR
+
+echo 'MAKE INSTALL'
 
 touch /etc/ld.so.conf
 
-make install
+make install 1> $INSTALLLOG 2> $INSTALLERR
 
-cp -v ../glibc-2.22/nscd/nscd.conf /etc/nscd.conf
-mkdir -pv /var/cache/nscd
+cp -v ../glibc-2.22/nscd/nscd.conf /etc/nscd.conf 1>> $INSTALLLOG 2>> $INSTALLERR
+mkdir -pv /var/cache/nscd 1>> $INSTALLLOG 2>> $INSTALLERR
 
-mkdir -pv /usr/lib/locale
-localedef -i cs_CZ -f UTF-8 cs_CZ.UTF-8
-localedef -i de_DE -f ISO-8859-1 de_DE
-localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro
-localedef -i de_DE -f UTF-8 de_DE.UTF-8
-localedef -i en_GB -f UTF-8 en_GB.UTF-8
-localedef -i en_HK -f ISO-8859-1 en_HK
-localedef -i en_PH -f ISO-8859-1 en_PH
-localedef -i en_US -f ISO-8859-1 en_US
-localedef -i en_US -f UTF-8 en_US.UTF-8
-localedef -i es_MX -f ISO-8859-1 es_MX
-localedef -i fa_IR -f UTF-8 fa_IR
-localedef -i fr_FR -f ISO-8859-1 fr_FR
-localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro
-localedef -i fr_FR -f UTF-8 fr_FR.UTF-8
-localedef -i it_IT -f ISO-8859-1 it_IT
-localedef -i it_IT -f UTF-8 it_IT.UTF-8
-localedef -i ja_JP -f EUC-JP ja_JP
-localedef -i ru_RU -f KOI8-R ru_RU.KOI8-R
-localedef -i ru_RU -f UTF-8 ru_RU.UTF-8
-localedef -i tr_TR -f UTF-8 tr_TR.UTF-8
-localedef -i zh_CN -f GB18030 zh_CN.GB18030
+mkdir -pv /usr/lib/locale 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i cs_CZ -f UTF-8 cs_CZ.UTF-8 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i de_DE -f ISO-8859-1 de_DE 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i de_DE -f UTF-8 de_DE.UTF-8 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i en_GB -f UTF-8 en_GB.UTF-8 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i en_HK -f ISO-8859-1 en_HK 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i en_PH -f ISO-8859-1 en_PH 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i en_US -f ISO-8859-1 en_US 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i en_US -f UTF-8 en_US.UTF-8 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i es_MX -f ISO-8859-1 es_MX 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i fa_IR -f UTF-8 fa_IR 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i fr_FR -f ISO-8859-1 fr_FR 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i fr_FR -f UTF-8 fr_FR.UTF-8 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i it_IT -f ISO-8859-1 it_IT 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i it_IT -f UTF-8 it_IT.UTF-8 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i ja_JP -f EUC-JP ja_JP 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i ru_RU -f KOI8-R ru_RU.KOI8-R 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i ru_RU -f UTF-8 ru_RU.UTF-8 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i tr_TR -f UTF-8 tr_TR.UTF-8 1>> $INSTALLLOG 2>> $INSTALLERR
+localedef -i zh_CN -f GB18030 zh_CN.GB18030 1>> $INSTALLLOG 2>> $INSTALLERR
 
 cat > /etc/nsswitch.conf << "EOF"
 # Begin /etc/nsswitch.conf
@@ -87,10 +82,6 @@ rpc: files
 # End /etc/nsswitch.conf
 EOF
 
-#
-# install timezone data
-#
-
 tar -xf ../tzdata2015f.tar.gz
 
 ZONEINFO=/usr/share/zoneinfo
@@ -107,11 +98,7 @@ cp -v zone.tab zone1970.tab iso3166.tab $ZONEINFO
 zic -d $ZONEINFO -p America/New_York
 unset ZONEINFO
 
-cp -v /usr/share/zoneinfo/US/Pacific /etc/localtime
-
-#
-# Configure dynamic loader
-#
+cp -v /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
 
 cat > /etc/ld.so.conf << "EOF"
 # Begin /etc/ld.so.conf
@@ -127,8 +114,4 @@ include /etc/ld.so.conf.d/*.conf
 EOF
 mkdir -pv /etc/ld.so.conf.d
 
-cd ..
-
-rm -r -f glibc-build
-rm -r -f $SRCDIR
-
+source $DIR/docleanup.sh

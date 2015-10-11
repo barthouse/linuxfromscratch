@@ -1,8 +1,15 @@
-# bzip2 -cd gcc-5.2.0.tar.bz2 | tar xvf -
+PKGNAME=gcc
+PKGVER=5.2.0
+TAREXT=bz2
 
-# mkdir -v gcc-build
+source $BUILD/dosetup.sh
 
-cd gcc-build
+source $BUILD/dotar.sh
+
+mkdir -v ../$PKGNAME-build
+cd ../$PKGNAME-build
+
+echo 'CONFIG'
 
 ../gcc-5.2.0/libstdc++-v3/configure \
     --host=$LFS_TGT                 \
@@ -11,14 +18,16 @@ cd gcc-build
     --disable-nls                   \
     --disable-libstdcxx-threads     \
     --disable-libstdcxx-pch         \
-    --with-gxx-include-dir=/tools/$LFS_TGT/include/c++/5.2.0
+    --with-gxx-include-dir=/tools/$LFS_TGT/include/c++/5.2.0 \
+     1> $CONFIGLOG 2> $CONFIGERR
 
-make
+echo 'MAKE'
 
-make install
+make 1> $MAKELOG 2> $MAKEERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f gcc-build
+make install 1> $INSTALLLOG 2> $INSTALLERR
 
-rm -r -f gcc-5.2.0
+source $BUILD/docleanup.sh
+

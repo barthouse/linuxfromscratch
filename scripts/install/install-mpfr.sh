@@ -1,45 +1,35 @@
 PKGNAME=mpfr
 PKGVER=3.1.3
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
+
+source $DIR/dotar.sh
 
 patch -Np1 -i ../mpfr-3.1.3-upstream_fixes-1.patch
 
-./configure --prefix=/usr --disable-static --enable-thread-safe \
-            --docdir=/usr/share/doc/mpfr-3.1.3
+echo 'CONFIG'
 
-make
-make html
+./configure --prefix=/usr        \
+            --disable-static     \
+            --enable-thread-safe \
+            --docdir=/usr/share/doc/mpfr-3.1.3 \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-make check
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make 1> $MAKELOG 2> $MAKEERR
+make html 1>> $MAKELOG 2>> $MAKEERR
 
-make install
-make install-html
+echo 'MAKE TESTS'
 
-cd ..
+make check 1> $TESTLOG 2> $TESTERR
 
-rm -r -f $SRCDIR
+echo 'MAKE INSTALL'
 
+make install 1> $INSTALLLOG 2> $INSTALLERR
+make install-html 1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

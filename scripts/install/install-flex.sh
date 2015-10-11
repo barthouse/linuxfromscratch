@@ -1,44 +1,37 @@
 PKGNAME=flex
 PKGVER=2.5.39
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-sed -i -e '/test-bison/d' tests/Makefile.in
+source $DIR/dotar.sh
 
-./configure --prefix=/usr --docdir=/usr/share/doc/flex-2.5.39
+echo 'CONFIG'
 
-make
+sed -i -e '/test-bison/d' tests/Makefile.in \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-make check
+./configure --prefix=/usr --docdir=/usr/share/doc/flex-2.5.39 \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE'
 
-make install
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-ln -sv flex /usr/bin/lex
+echo 'MAKE TESTS'
 
-cd ..
+make check \
+    1> $TESTLOG 2> $TESTERR
 
-rm -r -f $SRCDIR
+echo 'MAKE INSTALL'
 
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+ln -sv flex /usr/bin/lex \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

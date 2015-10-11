@@ -1,51 +1,58 @@
 PKGNAME=readline
 PKGVER=6.3
 TAREXT=gz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-patch -Np1 -i ../readline-6.3-upstream_fixes-3.patch
+source $DIR/dotar.sh
 
-sed -i '/MV.*old/d' Makefile.in
-sed -i '/{OLDSUFF}/c:' support/shlib-install
+echo 'PATCH'
+
+patch -Np1 -i ../readline-6.3-upstream_fixes-3.patch \
+    1> $PATCHLOG 2> $PATCHERR
+
+echo 'CONFIG'
+
+sed -i '/MV.*old/d' Makefile.in \
+    1> $CONFIGLOG 2> $CONFIGERR
+
+sed -i '/{OLDSUFF}/c:' support/shlib-install \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
 ./configure --prefix=/usr    \
             --disable-static \
-            --docdir=/usr/share/doc/readline-6.3
+            --docdir=/usr/share/doc/readline-6.3 \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-make SHLIB_LIBS=-lncurses
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make SHLIB_LIBS=-lncurses \
+    1> $MAKELOG 2> $MAKEERR
 
-make SHLIB_LIBS=-lncurses install
+echo 'MAKE INSTALL'
 
-mv -v /usr/lib/lib{readline,history}.so.* /lib
-ln -sfv ../../lib/$(readlink /usr/lib/libreadline.so) /usr/lib/libreadline.so
-ln -sfv ../../lib/$(readlink /usr/lib/libhistory.so ) /usr/lib/libhistory.so
+make SHLIB_LIBS=-lncurses install \
+    1> $INSTALLLOG 2> $INSTALLERR
 
-install -v -m644 doc/*.{ps,pdf,html,dvi} /usr/share/doc/readline-6.3
+mv -v /usr/lib/lib{readline,history}.so.* /lib \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
-cd ..
+if [ -h /usr/lib/libreadline.so ]
+then
+    ln -sfv ../../lib/$(readlink /usr/lib/libreadline.so) \
+         /usr/lib/libreadline.so \
+        1>> $INSTALLLOG 2>> $INSTALLERR
 
-rm -r -f $SRCDIR
+    ln -sfv ../../lib/$(readlink /usr/lib/libhistory.so ) \
+        /usr/lib/libhistory.so \
+        1>> $INSTALLLOG 2>> $INSTALLERR
+else
+    echo 'Build failed'
+fi
 
+install -v -m644 doc/*.{ps,pdf,html,dvi} /usr/share/doc/readline-6.3 \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

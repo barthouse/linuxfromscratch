@@ -1,38 +1,24 @@
 PKGNAME=linux
 PKGVER=4.2
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-          ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-make mrproper
+source $DIR/dotar.sh
 
-make INSTALL_HDR_PATH=dest headers_install
-find dest/include \( -name .install -o -name ..install.cmd \) -delete
-cp -rv dest/include/* /usr/include
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make mrproper 1> $MAKELOG 2> $MAKEERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f $SRCDIR
+make INSTALL_HDR_PATH=dest headers_install 1> $INSTALLLOG 2> $INSTALLERR
 
+find dest/include \( -name .install -o -name ..install.cmd \) -delete \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+cp -rv dest/include/* /usr/include 1> $INSTALLLOG 2> $INSTALLERR
+
+source $DIR/docleanup.sh

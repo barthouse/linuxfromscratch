@@ -1,32 +1,27 @@
-# build-coreutils.sh
+PKGNAME=coreutils
+PKGVER=8.24
+TAREXT=xz
 
-TARFILE=coreutils-8.24.tar.xz
-SRCDIR=coreutils-8.24
+source $BUILD/dosetup.sh
 
-# -z for .gz
-# tar -zxvf $TARFILE
+source $BUILD/dotar.sh
 
-# -J for .xz
-tar -Jxvf $TARFILE
+echo 'CONFIG'
 
-cd $SRCDIR
+./configure --prefix=/tools \
+            --enable-install-program=hostname \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-./configure --prefix=/tools --enable-install-program=hostname
+echo 'MAKE'
 
-make 
+make 1> $MAKELOG 2> $MAKEERR
 
-make RUN_EXPENSIVE_TESTS=yes check
+echo 'MAKE TESTS'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make RUN_EXPENSIVE_TESTS=yes check 1> $TESTLOG 2> $TESTERR
 
-make install
+echo 'MAKE INSTALL'
 
-cd ..
+make install 1> $INSTALLLOG 2> $INSTALLERR
 
-rm -r -f $SRCDIR
+source $BUILD/docleanup.sh

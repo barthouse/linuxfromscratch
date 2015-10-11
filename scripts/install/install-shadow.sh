@@ -1,50 +1,42 @@
 PKGNAME=shadow
 PKGVER=4.2.1
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-sed -i 's/groups$(EXEEXT) //' src/Makefile.in
-find man -name Makefile.in -exec sed -i 's/groups\.1 / /' {} \;
+source $DIR/dotar.sh
+
+echo 'CONFIG'
+
+sed -i 's/groups$(EXEEXT) //' src/Makefile.in \
+    1> $CONFIGLOG 2> $CONFIGERR
+
+find man -name Makefile.in -exec sed -i 's/groups\.1 / /' {} \; \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
 sed -i -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD SHA512@' \
-       -e 's@/var/spool/mail@/var/mail@' etc/login.defs
+       -e 's@/var/spool/mail@/var/mail@' etc/login.defs \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-sed -i 's/1000/999/' etc/useradd
+sed -i 's/1000/999/' etc/useradd \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-./configure --sysconfdir=/etc --with-group-name-max-length=32
+./configure --sysconfdir=/etc --with-group-name-max-length=32 \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-make
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-make install
+echo 'MAKE INSTALL'
 
-mv -v /usr/bin/passwd /bin
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
 
-passwd root
+mv -v /usr/bin/passwd /bin \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
-cd ..
-
-rm -r -f $SRCDIR
-
+source $DIR/docleanup.sh

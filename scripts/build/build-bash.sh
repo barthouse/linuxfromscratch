@@ -1,31 +1,29 @@
-# build-bash.sh
+PKGNAME=bash
+PKGVER=4.3.30
+TAREXT=gz
 
-SRCDIR=bash-4.3.30
+source $BUILD/dosetup.sh
 
-tar -zxvf bash-4.3.30.tar.gz
+source $BUILD/dotar.sh
 
-cd $SRCDIR
+echo 'CONFIG'
 
-./configure --prefix=/tools \
-            --without-bash-malloc
+./configure --prefix=/tools --without-bash-malloc \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-make 
+echo 'MAKE'
 
-make tests
+make 1> $MAKELOG 2> $MAKEERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE TESTS'
 
-make install
+make tests 1> $TESTLOG 2> $TESTERR
+
+echo 'MAKE INSTALL'
+
+make install 1> $INSTALLLOG 2> $INSTALLERR
 
 ln -sv bash /tools/bin/sh
 
-cd ..
-
-rm -r -f $SRCDIR
+source $BUILD/docleanup.sh
 

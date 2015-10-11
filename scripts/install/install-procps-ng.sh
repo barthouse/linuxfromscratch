@@ -1,49 +1,51 @@
 PKGNAME=procps-ng
 PKGVER=3.3.11
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
+
+source $DIR/dotar.sh
+
+echo 'CONFIG'
 
 ./configure --prefix=/usr                            \
             --exec-prefix=                           \
             --libdir=/usr/lib                        \
             --docdir=/usr/share/doc/procps-ng-3.3.11 \
             --disable-static                         \
-            --disable-kill
+            --disable-kill                           \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-make
+echo 'MAKE'
 
-sed -i -r 's|(pmap_initname)\\\$|\1|' testsuite/pmap.test/pmap.exp
-make check
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE TESTS'
 
-make install
+sed -i -r 's|(pmap_initname)\\\$|\1|' testsuite/pmap.test/pmap.exp \
+    1> $TESTLOG 2> $TESTERR
 
-mv -v /usr/lib/libprocps.so.* /lib
-ln -sfv ../../lib/$(readlink /usr/lib/libprocps.so) /usr/lib/libprocps.so
+make check \
+    1>> $TESTLOG 2>> $TESTERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f $SRCDIR
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
 
+if [ -h /usr/lib/libprocps.so ] 
+then
+    mv -v /usr/lib/libprocps.so.* /lib \
+        1>> $INSTALLLOG 2>> $INSTALLERR
+
+    ln -sfv ../../lib/$(readlink /usr/lib/libprocps.so) \
+            /usr/lib/libprocps.so \
+        1>> $INSTALLLOG 2>> $INSTALLERR
+else
+    echo 'build failed'
+fi
+
+source $DIR/docleanup.sh

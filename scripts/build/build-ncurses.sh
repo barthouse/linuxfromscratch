@@ -1,33 +1,30 @@
-# build-ncurses.sh
+PKGNAME=ncurses
+PKGVER=6.0
+TAREXT=gz
 
-SRCDIR=ncurses-6.0
+source $BUILD/dosetup.sh
 
-tar -zxvf ncurses-6.0.tar.gz
-
-cd $SRCDIR
+source $BUILD/dotar.sh
 
 sed -i s/mawk// configure
 
+echo 'CONFIG'
+
 ./configure --prefix=/tools \
-            --with-shared \
+            --with-shared   \
             --without-debug \
-            --without-ada \
-            --enable-widec \
-            --enable-overwrite
+            --without-ada   \
+            --enable-widec  \
+            --enable-overwrite \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-make 
+echo 'MAKE'
 
-make install
+make 1> $MAKELOG 2> $MAKEERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE INSTALL'
 
-cd ..
+make install 1> $INSTALLLOG 2> $INSTALLERR
 
-rm -r -f $SRCDIR
+source $BUILD/docleanup.sh
 

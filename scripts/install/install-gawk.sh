@@ -1,43 +1,37 @@
 PKGNAME=gawk
 PKGVER=4.1.3
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-./configure --prefix=/usr
+source $DIR/dotar.sh
 
-make
+echo 'CONFIG'
 
-make check
+./configure --prefix=/usr \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE'
 
-make install
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-mkdir -v /usr/share/doc/gawk-4.1.3
-cp    -v doc/{awkforai.txt,*.{eps,pdf,jpg}} /usr/share/doc/gawk-4.1.3
+echo 'MAKE TESTS'
 
-cd ..
+make check \
+    1> $TESTLOG 2> $TESTERR
 
-rm -r -f $SRCDIR
+echo 'MAKE INSTALL'
 
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+mkdir -v /usr/share/doc/gawk-4.1.3 \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+cp    -v doc/{awkforai.txt,*.{eps,pdf,jpg}} /usr/share/doc/gawk-4.1.3 \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

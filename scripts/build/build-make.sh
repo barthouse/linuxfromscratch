@@ -1,39 +1,26 @@
 PKGNAME=make
 PKGVER=4.1
 TAREXT=bz2
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          break;;
-    "xz") tar -Jxvf $TARFILE
-          break;;
-    "bz2") tar -jxvf $TARFILE
-          break;;
-    *) echo "unrecognized tar extension"
-          exit;; 
-esac
+source $BUILD/dosetup.sh
 
-cd $SRCDIR
+source $BUILD/dotar.sh
 
-./configure --prefix=/tools --without-guile
+echo 'CONFIG'
 
-make
+./configure --prefix=/tools --without-guile \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-make check
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make 1> $MAKELOG 2> $MAKEERR
 
-make install
+echo 'MAKE TESTS'
 
-cd ..
+make check 1> $TESTLOG 2> $TESTERR
 
-rm -r -f $SRCDIR
+echo 'MAKE INSTALL'
 
+make install 1> $INSTALLLOG 2> $INSTALLERR
+
+source $BUILD/docleanup.sh

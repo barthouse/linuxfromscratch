@@ -1,24 +1,17 @@
 PKGNAME=eudev
 PKGVER=3.1.2
 TAREXT=gz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-sed -r -i 's|/usr(/bin/test)|\1|' test/udev-test.pl
+source $DIR/dotar.sh
+
+echo 'CONFIG'
+
+sed -r -i 's|/usr(/bin/test)|\1|' test/udev-test.pl \
+    1> $CONFIGLOG 2> $CONFIGERR
 
 cat > config.cache << "EOF"
 HAVE_BLKID=1
@@ -41,29 +34,37 @@ EOF
             --disable-gudev         \
             --disable-static        \
             --config-cache          \
-            --disable-gtk-doc-html
+            --disable-gtk-doc-html  \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-LIBRARY_PATH=/tools/lib make
+echo 'MAKE'
 
-mkdir -pv /lib/udev/rules.d
-mkdir -pv /etc/udev/rules.d
+LIBRARY_PATH=/tools/lib make \
+    1> $MAKELOG 2> $MAKEERR
 
-make LD_LIBRARY_PATH=/tools/lib check
+echo 'MAKE TESTS'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+mkdir -pv /lib/udev/rules.d \
+    1> $TESTLOG 2> $TESTERR
 
-make LD_LIBRARY_PATH=/tools/lib install
+mkdir -pv /etc/udev/rules.d \
+    1>> $TESTLOG 2>> $TESTERR
 
-tar -xvf ../udev-lfs-20140408.tar.bz2
-make -f udev-lfs-20140408/Makefile.lfs install
+make LD_LIBRARY_PATH=/tools/lib check \
+    1>> $TESTLOG 2>> $TESTERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f $SRCDIR
+make LD_LIBRARY_PATH=/tools/lib install \
+    1> $INSTALLLOG 2> $INSTALLERR
 
+tar -xvf ../udev-lfs-20140408.tar.bz2 \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+make -f udev-lfs-20140408/Makefile.lfs install \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+LD_LIBRARY_PATH=/tools/lib udevadm hwdb --update \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

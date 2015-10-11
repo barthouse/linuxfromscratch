@@ -1,26 +1,17 @@
-# build-bzip2.sh
+PKGNAME=bzip2
+PKGVER=1.0.6
+TAREXT=gz
 
-TARFILE=bzip2-1.0.6.tar.gz
-SRCDIR=bzip2-1.0.6
+source $BUILD/dosetup.sh
 
-tar -zxvf $TARFILE
+source $BUILD/dotar.sh
 
-cd $SRCDIR
+echo 'MAKE'
 
-# ./configure --prefix=/tools
+make 1> $MAKELOG 2> $MAKEERR
 
-make 
+echo 'MAKE INSTALL'
 
-make PREFIX=/tools install
+make PREFIX=/tools install 1> $INSTALLLOG 2> $INSTALLERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
-
-cd ..
-
-rm -r -f $SRCDIR
+source $BUILD/docleanup.sh

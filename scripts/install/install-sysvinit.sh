@@ -1,38 +1,26 @@
 PKGNAME=sysvinit
 PKGVER=2.88dsf
 TAREXT=bz2
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-patch -Np1 -i ../sysvinit-2.88dsf-consolidated-1.patch
+source $DIR/dotar.sh
 
-make -C src
+echo 'CONFIG'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+patch -Np1 -i ../sysvinit-2.88dsf-consolidated-1.patch \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-make -C src install
+echo 'MAKE'
 
-cd ..
+make -C src \
+    1> $MAKELOG 2> $MAKEERR
 
-rm -r -f $SRCDIR
+echo 'MAKE INSTALL'
 
+make -C src install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+source $DIR/docleanup.sh

@@ -1,40 +1,35 @@
 PKGNAME=iproute2
 PKGVER=4.2.0
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-sed -i '/^TARGETS/s@arpd@@g' misc/Makefile
-sed -i /ARPD/d Makefile
-sed -i 's/arpd.8//' man/man8/Makefile
+source $DIR/dotar.sh
 
-make
+echo 'CONFIG'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+sed -i '/^TARGETS/s@arpd@@g' misc/Makefile \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-make DOCDIR=/usr/share/doc/iproute2-4.2.0 install
+sed -i /ARPD/d Makefile \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-cd ..
+sed -i 's/arpd.8//' man/man8/Makefile \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-rm -r -f $SRCDIR
+./configure --prefix=/usr \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
+echo 'MAKE'
+
+make \
+    1> $MAKELOG 2> $MAKEERR
+
+echo 'MAKE INSTALL'
+
+make DOCDIR=/usr/share/doc/iproute2-4.2.0 install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+source $DIR/docleanup.sh

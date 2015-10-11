@@ -1,24 +1,23 @@
-# build-dejagnu.sh
+PKGNAME=dejagnu
+PKGVER=1.5.3
+TAREXT=gz
 
-tar -zxvf dejagnu-1.5.3.tar.gz
+source $BUILD/dosetup.sh
 
-cd dejagnu-1.5.3
+source $BUILD/dotar.sh
 
-./configure --prefix=/tools
+echo 'CONFIG'
 
-make install
+./configure --prefix=/tools \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-make check
+echo 'MAKE INSTALL'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make install 1> $INSTALLLOG 2> $INSTALLERR
 
-cd ..
+echo 'MAKE CHECK'
 
-rm -r -f dejagnu-1.5.3
+make check 1> $TESTLOG 2> $TESTERR
+
+source $BUILD/docleanup.sh
 

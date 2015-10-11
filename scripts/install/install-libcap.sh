@@ -1,42 +1,35 @@
 PKGNAME=libcap
 PKGVER=2.24
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-sed -i '/install.*STALIBNAME/d' libcap/Makefile
+source $DIR/dotar.sh
 
-make
+echo 'CONFIG'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+sed -i '/install.*STALIBNAME/d' libcap/Makefile \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-make RAISE_SETFCAP=no prefix=/usr install
-chmod -v 755 /usr/lib/libcap.so
+echo 'MAKE'
 
-mv -v /usr/lib/libcap.so.* /lib
-ln -sfv ../../lib/$(readlink /usr/lib/libcap.so) /usr/lib/libcap.so
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f $SRCDIR
+make RAISE_SETFCAP=no prefix=/usr install \
+    1> $INSTALLLOG 2> $INSTALLERR
 
+chmod -v 755 /usr/lib/libcap.so \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+mv -v /usr/lib/libcap.so.* /lib \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+ln -sfv ../../lib/$(readlink /usr/lib/libcap.so) /usr/lib/libcap.so \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

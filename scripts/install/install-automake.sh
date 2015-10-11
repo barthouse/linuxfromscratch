@@ -1,43 +1,40 @@
 PKGNAME=automake
 PKGVER=1.15
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-sed -i 's:/\\\${:/\\\$\\{:' bin/automake.in
+source $DIR/dotar.sh
 
-./configure --prefix=/usr --docdir=/usr/share/doc/automake-1.15
+echo 'CONFIG'
 
-make
+sed -i 's:/\\\${:/\\\$\\{:' bin/automake.in \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-sed -i "s:./configure:LEXLIB=/usr/lib/libfl.a &:" t/lex-{clean,depend}-cxx.sh
-make -j4 check
+./configure --prefix=/usr --docdir=/usr/share/doc/automake-1.15 \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+./configure --prefix=/usr \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-make install
+echo 'MAKE'
 
-cd ..
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-rm -r -f $SRCDIR
+echo 'MAKE TESTS'
 
+sed -i "s:./configure:LEXLIB=/usr/lib/libfl.a &:" t/lex-{clean,depend}-cxx.sh \
+    1> $TESTLOG 2> $TESTERR
+
+make -j4 check \
+    1>> $TESTLOG 2>> $TESTERR
+
+echo 'MAKE INSTALL'
+
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+source $DIR/docleanup.sh

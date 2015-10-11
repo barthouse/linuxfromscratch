@@ -1,33 +1,26 @@
 PKGNAME=gzip
 PKGVER=1.6
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.xz
+TAREXT=xz
 
-# -z for .gz
-# tar -zxvf $TARFILE
+source $BUILD/dosetup.sh
 
-# -J for .xz
-tar -Jxvf $TARFILE
+source $BUILD/dotar.sh
 
-cd $SRCDIR
+echo 'CONFIG'
 
-./configure --prefix=/tools
+./configure --prefix=/tools \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-make
+echo 'MAKE'
 
-make check
+make 1> $MAKELOG 2> $MAKEERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE TESTS'
 
-make install
+make check 1> $TESTLOG 2> $TESTERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f $SRCDIR
+make install 1> $INSTALLLOG 2> $INSTALLERR
 
+source $BUILD/docleanup.sh

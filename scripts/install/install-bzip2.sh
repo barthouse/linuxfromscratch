@@ -1,52 +1,43 @@
 PKGNAME=bzip2
 PKGVER=1.0.6
 TAREXT=gz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-patch -Np1 -i ../bzip2-1.0.6-install_docs-1.patch
+source $DIR/dotar.sh
 
-sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile
+patch -Np1 -i ../bzip2-1.0.6-install_docs-1.patch \
+    1> $PATCHLOG 2> $PATCHERR
 
-sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile
+echo 'CONFIG'
 
-make -f Makefile-libbz2_so
-make clean
+sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-make
+sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make -f Makefile-libbz2_so 1> $CONFIGLOG 2> $CONFIGERR \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-make PREFIX=/usr install
+echo 'MAKE'
 
-cp -v bzip2-shared /bin/bzip2
-cp -av libbz2.so* /lib
-ln -sv ../../lib/libbz2.so.1.0 /usr/lib/libbz2.so
-rm -v /usr/bin/{bunzip2,bzcat,bzip2}
-ln -sv bzip2 /bin/bunzip2
-ln -sv bzip2 /bin/bzcat
+make clean 1> $MAKELOG 2> $MAKEERR
 
-cd ..
+make 1>> $MAKELOG 2>> $MAKEERR
 
-rm -r -f $SRCDIR
+echo 'MAKE INSTALL'
 
+make PREFIX=/usr install 1> $INSTALLLOG 2> $INSTALLERR
+
+cp -v bzip2-shared /bin/bzip2 1>> $INSTALLLOG 2>> $INSTALLERR
+cp -av libbz2.so* /lib 1>> $INSTALLLOG 2>> $INSTALLERR
+ln -sv ../../lib/libbz2.so.1.0 /usr/lib/libbz2.so \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+rm -v /usr/bin/{bunzip2,bzcat,bzip2} 1>> $INSTALLLOG 2>> $INSTALLERR
+ln -sv bzip2 /bin/bunzip2 1>> $INSTALLLOG 2>> $INSTALLERR
+ln -sv bzip2 /bin/bzcat 1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

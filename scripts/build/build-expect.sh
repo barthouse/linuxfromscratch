@@ -1,34 +1,35 @@
-# build-expect.sh
+PKGNAME=expect
+PKGVER=5.45
+TAREXT=gz
 
-# VERSION=5.45
-# TARFILE=expect$(VERSION).tar.gz
+source $BUILD/dosetup.sh
 
-tar -zxvf expect5.45.tar.gz
+SRCDIR=$PKGNAME$PKGVER
+TARFILE=$SRCDIR.tar.$TAREXT
 
-cd expect5.45
+source $BUILD/dotar.sh
 
 cp -v configure{,.orig}
 sed 's:/usr/local/bin:/bin:' configure.orig > configure
 
-./configure --prefix=/tools \
+echo 'CONFIG'
+
+./configure --prefix=/tools       \
             --with-tcl=/tools/lib \
-            --with-tclinclude=/tools/include
+            --with-tclinclude=/tools/include \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-make
+echo 'MAKE'
 
-make test
+make 1> $MAKELOG 2> $MAKEERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE TEST'
 
-make SCRIPTS="" install
+make test 1> $TESTLOG 2> $TESTERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f expect5.45
+make SCRIPTS="" install 1> $INSTALLLOG 2> $INSTALLERR
+
+source $BUILD/docleanup.sh
 

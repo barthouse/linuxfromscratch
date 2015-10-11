@@ -1,22 +1,14 @@
 PKGNAME=e2fsprogs
 PKGVER=1.42.13
 TAREXT=gz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
+
+source $DIR/dotar.sh
+
+echo 'CONFIG'
 
 mkdir -v build
 cd build
@@ -31,35 +23,48 @@ PKG_CONFIG_PATH=/tools/lib/pkgconfig \
              --disable-libblkid      \
              --disable-libuuid       \
              --disable-uuidd         \
-             --disable-fsck
+             --disable-fsck          \
+    1> ../$CONFIGLOG 2> ../$CONFIGERR
 
-make
+echo 'MAKE'
 
-ln -sfv /tools/lib/lib{blk,uu}id.so.1 lib
-make LD_LIBRARY_PATH=/tools/lib check
+make \
+    1> ../$MAKELOG 2> ../$MAKEERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE TESTS'
 
-make install
+ln -sfv /tools/lib/lib{blk,uu}id.so.1 lib \
+    1> ../$TESTLOG 2> ../$TESTERR
 
-make install-libs
+make LD_LIBRARY_PATH=/tools/lib check \
+    1>> ../$TESTLOG 2>> ../$TESTERR
 
-chmod -v u+w /usr/lib/{libcom_err,libe2p,libext2fs,libss}.a
+echo 'MAKE INSTALL'
 
-gunzip -v /usr/share/info/libext2fs.info.gz
-install-info --dir-file=/usr/share/info/dir /usr/share/info/libext2fs.info
+make install \
+    1> ../$INSTALLLOG 2> ../$INSTALLERR
 
-makeinfo -o      doc/com_err.info ../lib/et/com_err.texinfo
-install -v -m644 doc/com_err.info /usr/share/info
-install-info --dir-file=/usr/share/info/dir /usr/share/info/com_err.info
+make install-libs \
+    1>> ../$INSTALLLOG 2>> ../$INSTALLERR
+
+chmod -v u+w /usr/lib/{libcom_err,libe2p,libext2fs,libss}.a \
+    1>> ../$INSTALLLOG 2>> ../$INSTALLERR
+
+gunzip -v /usr/share/info/libext2fs.info.gz \
+    1>> ../$INSTALLLOG 2>> ../$INSTALLERR
+
+install-info --dir-file=/usr/share/info/dir /usr/share/info/libext2fs.info \
+    1>> ../$INSTALLLOG 2>> ../$INSTALLERR
+
+makeinfo -o      doc/com_err.info ../lib/et/com_err.texinfo \
+    1>> ../$INSTALLLOG 2>> ../$INSTALLERR
+
+install -v -m644 doc/com_err.info /usr/share/info \
+    1>> ../$INSTALLLOG 2>> ../$INSTALLERR
+
+install-info --dir-file=/usr/share/info/dir /usr/share/info/com_err.info \
+    1>> ../$INSTALLLOG 2>> ../$INSTALLERR
 
 cd ..
 
-rm -r -f $SRCDIR
-
+source $DIR/docleanup.sh

@@ -1,63 +1,60 @@
 PKGNAME=ncurses
 PKGVER=6.0
 TAREXT=gz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-sed -i '/LIBTOOL_INSTALL/d' c++/Makefile.in
+source $DIR/dotar.sh
 
-./configure --prefix=/usr           \
+echo 'CONFIG'
+
+sed -i '/LIBTOOL_INSTALL/d' c++/Makefile.in \
+            1> $CONFIGLOG 2> $CONFIGERR
+
+./configure --prefix=/usr \
             --mandir=/usr/share/man \
             --with-shared           \
             --without-debug         \
             --without-normal        \
             --enable-pc-files       \
-            --enable-widec
+            --enable-widec          \
+            1>> $CONFIGLOG 2>> $CONFIGERR
 
-make
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make 1> $MAKELOG 2> $MAKEERR
 
-make install
+echo 'MAKE INSTALL'
+
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
 
 mv -v /usr/lib/libncursesw.so.6* /lib
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
-ln -sfv ../../lib/$(readlink /usr/lib/libncursesw.so) /usr/lib/libncursesw.so
+ln -sfv ../../lib/$(readlink /usr/lib/libncursesw.so) /usr/lib/libncursesw.so \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
 for lib in ncurses form panel menu ; do
-    rm -vf                    /usr/lib/lib${lib}.so
+    rm -vf                    /usr/lib/lib${lib}.so \
+        1>> $INSTALLLOG 2>> $INSTALLERR
     echo "INPUT(-l${lib}w)" > /usr/lib/lib${lib}.so
-    ln -sfv ${lib}w.pc        /usr/lib/pkgconfig/${lib}.pc
+    ln -sfv ${lib}w.pc        /usr/lib/pkgconfig/${lib}.pc \
+        1>> $INSTALLLOG 2>> $INSTALLERR
 done
 
-rm -vf                     /usr/lib/libcursesw.so
+rm -vf                     /usr/lib/libcursesw.so \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 echo "INPUT(-lncursesw)" > /usr/lib/libcursesw.so
-ln -sfv libncurses.so      /usr/lib/libcurses.so
+ln -sfv libncurses.so      /usr/lib/libcurses.so \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
-mkdir -v       /usr/share/doc/ncurses-6.0
-cp -v -R doc/* /usr/share/doc/ncurses-6.0
+mkdir -v       /usr/share/doc/ncurses-6.0 \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+cp -v -R doc/* /usr/share/doc/ncurses-6.0 \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
-cd ..
-
-rm -r -f $SRCDIR
+source $DIR/docleanup.sh
 

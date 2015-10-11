@@ -1,47 +1,35 @@
 PKGNAME=gmp
-PKGVER=6.0.0
+PKGVER=6.0.0a
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=gmp-6.0.0a.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-./configure --prefix=/usr --enable-cxx --disable-static \
-            --docdir=/usr/share/doc/gmp-6.0.0a
+SRCDIR=gmp-6.0.0
 
-make
-make html
+source $DIR/dotar.sh
 
-make check 2>&1 | tee gmp-check-log
+echo 'CONFIG'
 
-echo 'checking test results'
+./configure --prefix=/usr    \
+            --enable-cxx     \
+            --disable-static \
+            --docdir=/usr/share/doc/gmp-6.0.0a \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-awk '/tests passed/{total+=$2} ; END{print total}' gmp-check-log
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make 1> $MAKELOG 2> $MAKEERR
+make html 1>> $MAKELOG 2>> $MAKEERR
 
-make install
-make install-html
+echo 'MAKE TESTS'
 
-cd ..
+make check 1> $TESTLOG 2> $TESTERR
 
-rm -r -f $SRCDIR
+echo 'MAKE INSTALL'
 
+make install 1> $INSTALLLOG 2> $INSTALLERR
+make install-html 1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

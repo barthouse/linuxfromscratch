@@ -1,24 +1,17 @@
 PKGNAME=util-linux
 PKGVER=2.27
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-mkdir -pv /var/lib/hwclock
+source $DIR/dotar.sh
+
+echo 'CONFIG'
+
+mkdir -pv /var/lib/hwclock \
+    1> $CONFIGLOG 2> $CONFIGERR
 
 ./configure ADJTIME_PATH=/var/lib/hwclock/adjtime   \
             --docdir=/usr/share/doc/util-linux-2.27 \
@@ -32,21 +25,23 @@ mkdir -pv /var/lib/hwclock
             --disable-static     \
             --without-python     \
             --without-systemd    \
-            --without-systemdsystemunitdir
+            --without-systemdsystemunitdir \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-make
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-make install
+echo 'MAKE TESTS'
 
-cd ..
+chown -Rv nobody .
+su nobody -s /bin/bash -c "PATH=$PATH make -k check"
+    1> $TESTLOG 2> $TESTERR
 
-rm -r -f $SRCDIR
+echo 'MAKE INSTALL'
 
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+source $DIR/docleanup.sh

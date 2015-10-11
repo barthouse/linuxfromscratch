@@ -1,33 +1,26 @@
-# build-file.sh
+PKGNAME=file
+PKGVER=5.24
+TAREXT=gz
 
-TARFILE=file-5.24.tar.gz
-SRCDIR=file-5.24
+source $BUILD/dosetup.sh
 
-# -z for .gz
-tar -zxvf $TARFILE
+source $BUILD/dotar.sh
 
-# -J for .xz
-# tar -Jxvf $TARFILE
+echo 'CONFIG'
 
-cd $SRCDIR
+./configure --prefix=/tools \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-./configure --prefix=/tools
+echo 'MAKE'
 
-make 
+make 1> $MAKELOG 2> $MAKEERR
 
-make check
+echo 'MAKE TESTS'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make check 1> $TESTLOG 2> $TESTERR
 
-make install
+echo 'MAKE INSTALL'
 
-cd ..
+make install 1> $INSTALLLOG 2> $INSTALLERR
 
-rm -r -f $SRCDIR
-
+source $BUILD/docleanup.sh

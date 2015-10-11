@@ -1,52 +1,54 @@
 PKGNAME=acl
 PKGVER=2.2.52
 TAREXT=gz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.src.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-sed -i -e 's|/@pkg_name@|&-@pkg_version@|' include/builddefs.in
+TARFILE=$PKGNAME-$PKGVER.src.tar.$TAREXT
 
-sed -i "s:| sed.*::g" test/{sbits-restore,cp,misc}.test
+source $DIR/dotar.sh
+
+exit
+
+echo 'CONFIG'
+
+sed -i -e 's|/@pkg_name@|&-@pkg_version@|' include/builddefs.in \
+    1> $CONFIGLOG 2> $CONFIGERR
+
+sed -i "s:| sed.*::g" test/{sbits-restore,cp,misc}.test \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
 sed -i -e "/TABS-1;/a if (x > (TABS-1)) x = (TABS-1);" \
-    libacl/__acl_to_any_text.c
+    libacl/__acl_to_any_text.c \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-./configure --prefix=/usr    \
+./configure --prefix=/usr \
             --bindir=/bin    \
             --disable-static \
-            --libexecdir=/usr/lib
+            --libexecdir=/usr/lib \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-make
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-make install install-dev install-lib
-chmod -v 755 /usr/lib/libacl.so
+exit
 
-mv -v /usr/lib/libacl.so.* /lib
-ln -sfv ../../lib/$(readlink /usr/lib/libacl.so) /usr/lib/libacl.so
+echo 'MAKE INSTALL'
 
-cd ..
+make install install-dev install-lib \
+    1> $INSTALLLOG 2> $INSTALLERR
 
-rm -r -f $SRCDIR
+chmod -v 755 /usr/lib/libacl.so \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
+mv -v /usr/lib/libacl.so.* /lib \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+ln -sfv ../../lib/$(readlink /usr/lib/libacl.so) /usr/lib/libacl.so \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

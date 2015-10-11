@@ -1,50 +1,51 @@
 PKGNAME=attr
 PKGVER=2.4.47
 TAREXT=gz
-SRCDIR=$PKGNAME-$PKGVER
+
+DIR="`dirname \"$0\"`"
+
+source $DIR/dosetup.sh
+
 TARFILE=$SRCDIR.src.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+source $DIR/dotar.sh
 
-cd $SRCDIR
+exit
 
-sed -i -e 's|/@pkg_name@|&-@pkg_version@|' include/builddefs.in
+echo 'CONFIG'
 
-sed -i -e "/SUBDIRS/s|man2||" man/Makefile
+sed -i -e 's|/@pkg_name@|&-@pkg_version@|' include/builddefs.in \
+            1> $CONFIGLOG 2> $CONFIGERR
+
+sed -i -e "/SUBDIRS/s|man2||" man/Makefile \
+            1>> $CONFIGLOG 2>> $CONFIGERR
 
 ./configure --prefix=/usr \
             --bindir=/bin \
-            --disable-static
+            --disable-static \
+            1>> $CONFIGLOG 2>> $CONFIGERR
 
-make
 
-make -j1 tests root-tests
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make 1> $MAKELOG 2> $MAKEERR
 
-make install install-dev install-lib
-chmod -v 755 /usr/lib/libattr.so
+echo 'MAKE TESTS'
 
-mv -v /usr/lib/libattr.so.* /lib
-ln -sfv ../../lib/$(readlink /usr/lib/libattr.so) /usr/lib/libattr.so
+make -j1 tests root-tests 1> $TESTLOG 2> $TESTERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f $SRCDIR
+make install install-dev install-lib \
+    1> $INSTALLLOG 2> $INSTALLERR
 
+chmod -v 755 /usr/lib/libattr.so \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+mv -v /usr/lib/libattr.so.* /lib \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+ln -sfv ../../lib/$(readlink /usr/lib/libattr.so) /usr/lib/libattr.so \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

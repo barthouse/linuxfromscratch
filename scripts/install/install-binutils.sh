@@ -1,48 +1,32 @@
 PKGNAME=binutils
 PKGVER=2.25.1
 TAREXT=bz2
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") echo tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-echo 'verifying PTYs are working properly'
+source $DIR/dotar.sh
 
-expect -c "spawn ls"
+source $DIR/dobuilddir.sh
 
-# mkdir -v ../binutils-build
-cd ../binutils-build
+echo 'CONFIG'
 
-../binutils-2.25.1/configure --prefix=/usr --enable-shared --disable-werror
+../binutils-2.25.1/configure --prefix=/usr \
+                           --enable-shared \
+                           --disable-werror \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-make tooldir=/usr
+echo 'MAKE'
 
-make check
+make tooldir=/usr 1> $MAKELOG 2> $MAKEERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE TESTS'
 
-make tooldir=/usr install
+make check 1> $TESTLOG 2> $TESTERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f binutils-build
-rm -r -f $SRCDIR
+make tooldir=/usr install 1> $INSTALLLOG 2> $INSTALLERR
 
+source $DIR/docleanup.sh

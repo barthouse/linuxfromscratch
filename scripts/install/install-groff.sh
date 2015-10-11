@@ -1,38 +1,26 @@
 PKGNAME=groff
 PKGVER=1.22.3
 TAREXT=gz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-PAGE=letter ./configure --prefix=/usr
+source $DIR/dotar.sh
 
-make
+echo 'CONFIG'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+PAGE=letter ./configure --prefix=/usr \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-make install
+echo 'MAKE'
 
-cd ..
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-rm -r -f $SRCDIR
+echo 'MAKE INSTALL'
 
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+source $DIR/docleanup.sh

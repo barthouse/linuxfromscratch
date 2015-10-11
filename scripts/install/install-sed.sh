@@ -1,42 +1,37 @@
 PKGNAME=sed
 PKGVER=4.2.2
 TAREXT=bz2
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-./configure --prefix=/usr --bindir=/bin --htmldir=/usr/share/doc/sed-4.2.2
+source $DIR/dotar.sh
 
-make
-make html
+echo 'CONFIG'
 
-make check
+./configure --prefix=/usr --bindir=/bin --htmldir=/usr/share/doc/sed-4.2.2 \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE'
 
-make install
-make -C doc install-html
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-cd ..
+make html \
+    1>> $MAKELOG 2>> $MAKEERR
 
-rm -r -f $SRCDIR
+echo 'MAKE TESTS'
 
+make check \
+    1> $TESTLOG 2> $TESTERR
+
+echo 'MAKE INSTALL'
+
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+make -C doc install-html \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

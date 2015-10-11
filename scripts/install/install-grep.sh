@@ -1,42 +1,34 @@
 PKGNAME=grep
 PKGVER=2.21
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-sed -i -e '/tp++/a  if (ep <= tp) break;' src/kwset.c
+source $DIR/dotar.sh
 
-./configure --prefix=/usr --bindir=/bin
+echo 'CONFIG'
 
-make
+sed -i -e '/tp++/a  if (ep <= tp) break;' src/kwset.c \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-make check
+./configure --prefix=/usr --bindir=/bin \
+    1>> $CONFIGLOG 2>> $CONFIGERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE'
 
-make install
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-cd ..
+echo 'MAKE TESTS'
 
-rm -r -f $SRCDIR
+make check \
+    1> $TESTLOG 2> $TESTERR
 
+echo 'MAKE INSTALL'
+
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+source $DIR/docleanup.sh

@@ -1,32 +1,48 @@
-tar -zxvf tcl-core8.6.4-src.tar.gz
+PKGNAME=tcl-core
+PKGVER=8.6.4
+TAREXT=gz
 
-cd tcl8.6.4
+source $BUILD/dosetup.sh
+
+TARFILE=$PKGNAME$PKGVER-src.tar.$TAREXT
+SRCDIR=tcl$PKGVER
+
+source $BUILD/dotar.sh
+
+# mkdir -v ../$PKGNAME-build
+# cd ../$PKGNAME-build
 
 cd unix
 
-./configure --prefix=/tools
+echo 'CONFIG'
 
-make
+./configure     \
+    --prefix=/tools            \
+     1> ../$CONFIGLOG 2> ../$CONFIGERR
 
-TZ=UTC make test
+echo 'MAKE'
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+make 1> ..\$MAKELOG 2> ..\$MAKEERR
 
-make install
+echo 'MAKE TEST'
+
+TZ=UTC make test 1> ../$TESTLOG 2> ../$TESTERR 
+
+echo 'MAKE INSTALL'
+
+make install 1> ../$INSTALLLOG 2> ../$INSTALLERR
 
 chmod -v u+w /tools/lib/libtcl8.6.so
 
-make install-private-headers
+echo 'MAKE INSTALL HEADERS'
+
+make install-private-headers \
+    1> ../../log/$PKGNAME-install-headers.log \
+    2> ../../log/$PKGNAME-install-headers.err
 
 ln -sv tclsh8.6 /tools/bin/tclsh
 
 cd ..
 
-rm -r -f tcl8.6.4
+source $BUILD/docleanup.sh
 

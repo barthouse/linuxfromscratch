@@ -1,43 +1,37 @@
 PKGNAME=gzip
 PKGVER=1.6
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
 
-./configure --prefix=/usr --bindir=/bin
+source $DIR/dotar.sh
 
-make
+echo 'CONFIG'
 
-make check
+./configure --prefix=/usr --bindir=/bin\
+    1> $CONFIGLOG 2> $CONFIGERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE'
 
-make install
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-mv -v /bin/{gzexe,uncompress,zcmp,zdiff,zegrep} /usr/bin
-mv -v /bin/{zfgrep,zforce,zgrep,zless,zmore,znew} /usr/bin
+echo 'MAKE TESTS'
 
-cd ..
+make check \
+    1> $TESTLOG 2> $TESTERR
 
-rm -r -f $SRCDIR
+echo 'MAKE INSTALL'
 
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
+
+mv -v /bin/{gzexe,uncompress,zcmp,zdiff,zegrep} /usr/bin \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+mv -v /bin/{zfgrep,zforce,zgrep,zless,zmore,znew} /usr/bin \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

@@ -1,6 +1,10 @@
-bzip2 -cd gcc-5.2.0.tar.bz2 | tar xvf -
+PKGNAME=gcc
+PKGVER=5.2.0
+TAREXT=bz2
 
-cd gcc-5.2.0
+source $BUILD/dosetup.sh
+
+source $BUILD/dotar.sh
 
 cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
   `dirname $($LFS_TGT-gcc -print-libgcc-file-name)`/include-fixed/limits.h
@@ -21,13 +25,17 @@ done
 
 tar -xf ../mpfr-3.1.3.tar.xz
 mv -v mpfr-3.1.3 mpfr
+
 tar -xf ../gmp-6.0.0a.tar.xz
 mv -v gmp-6.0.0 gmp
+
 tar -xf ../mpc-1.0.3.tar.gz
 mv -v mpc-1.0.3 mpc
 
-mkdir -v ../gcc-build
-cd ../gcc-build
+mkdir -v ../$PKGNAME-build
+cd ../$PKGNAME-build
+
+echo 'CONFIG'
 
 CC=$LFS_TGT-gcc                                    \
 CXX=$LFS_TGT-g++                                   \
@@ -41,21 +49,18 @@ RANLIB=$LFS_TGT-ranlib                             \
     --disable-libstdcxx-pch                        \
     --disable-multilib                             \
     --disable-bootstrap                            \
-    --disable-libgomp
+    --disable-libgomp                              \
+     1> $CONFIGLOG 2> $CONFIGERR
 
-make
+echo 'MAKE'
 
-make install
+make 1> $MAKELOG 2> $MAKEERR
+
+echo 'MAKE INSTALL'
+
+make install 1> $INSTALLLOG 2> $INSTALLERR
 
 ln -sv gcc /tools/bin/cc
 
-echo 'int main(){}' > dummy.c
-cc dummy.c
-readelf -l a.out | grep ': /tools'
-
-cd ..
-
-rm -r -f gcc-build
-
-rm -r -f gcc-5.2.0
+source $BUILD/docleanup.sh
 

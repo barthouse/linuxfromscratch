@@ -1,22 +1,14 @@
 PKGNAME=inetutils
 PKGVER=1.9.4
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          ;;
-    "xz") tar -Jxvf $TARFILE
-          ;;
-    "bz2") tar -jxvf $TARFILE
-           ;;
-    *) echo "unrecognized tar extension"
-       exit
-       ;; 
-esac
+DIR="`dirname \"$0\"`"
 
-cd $SRCDIR
+source $DIR/dosetup.sh
+
+source $DIR/dotar.sh
+
+echo 'CONFIG'
 
 ./configure --prefix=/usr        \
             --localstatedir=/var \
@@ -26,26 +18,28 @@ cd $SRCDIR
             --disable-rexec      \
             --disable-rlogin     \
             --disable-rsh        \
-            --disable-servers
+            --disable-servers    \
+    1> $CONFIGLOG 2> $CONFIGERR
 
-make
+echo 'MAKE'
 
-make check
+make \
+    1> $MAKELOG 2> $MAKEERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE TESTS'
 
-make install
+make check \
+    1> $TESTLOG 2> $TESTERR
 
-mv -v /usr/bin/{hostname,ping,ping6,traceroute} /bin
-mv -v /usr/bin/ifconfig /sbin
+echo 'MAKE INSTALL'
 
-cd ..
+make install \
+    1> $INSTALLLOG 2> $INSTALLERR
 
-rm -r -f $SRCDIR
+mv -v /usr/bin/{hostname,ping,ping6,traceroute} /bin \
+    1>> $INSTALLLOG 2>> $INSTALLERR
 
+mv -v /usr/bin/ifconfig /sbin \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
+source $DIR/docleanup.sh

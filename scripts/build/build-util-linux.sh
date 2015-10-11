@@ -1,38 +1,26 @@
 PKGNAME=util-linux
 PKGVER=2.27
 TAREXT=xz
-SRCDIR=$PKGNAME-$PKGVER
-TARFILE=$SRCDIR.tar.$TAREXT
 
-case $TAREXT in
-    "gz") tar -zxvf $TARFILE
-          break;;
-    "xz") tar -Jxvf $TARFILE
-          break;;
-    "bz2") tar -jxvf $TARFILE
-          break;;
-    *) echo "unrecognized tar extension"
-          exit;; 
-esac
+source $BUILD/dosetup.sh
 
-cd $SRCDIR
+source $BUILD/dotar.sh
 
-./configure --prefix=/tools --without-python --disable-makeinstall-chown \
-            --without-systemdsystemunitdir Pkg_CONFIG=""
+echo 'CONFIG'
 
-make
+./configure --prefix=/tools \
+            --without-python               \
+            --disable-makeinstall-chown    \
+            --without-systemdsystemunitdir \
+            PKG_CONFIG="" \
+            1> $CONFIGLOG 2> $CONFIGERR
 
-echo "Continue?"
-select yn in "y" "n"; do
-    case $yn in
-        "y" ) break;;
-        "n" ) exit;;
-    esac
-done
+echo 'MAKE'
 
-make install
+make 1> $MAKELOG 2> $MAKEERR
 
-cd ..
+echo 'MAKE INSTALL'
 
-rm -r -f $SRCDIR
+make install 1> $INSTALLLOG 2> $INSTALLERR
 
+source $BUILD/docleanup.sh
