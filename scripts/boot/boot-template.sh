@@ -1,5 +1,5 @@
-PKGNAME=texinfo
-PKGVER=6.0
+PKGNAME=
+PKGVER=
 TAREXT=xz
 
 DIR="`dirname \"$0\"`"
@@ -27,15 +27,5 @@ echo 'MAKE INSTALL'
 
 make install \
     1> $INSTALLLOG 2> $INSTALLERR
-
-make TEXMF=/usr/share/texmf install-tex \
-    1>> $INSTALLLOG 2>> $INSTALLERR
-
-pushd /usr/share/info
-rm -v dir
-for f in *
-  do install-info $f dir 2>/dev/null
-done
-popd
 
 source $DIR/docleanup.sh

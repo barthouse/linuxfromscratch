@@ -36,7 +36,7 @@ make \
 echo 'MAKE TESTS'
 
 chown -Rv nobody .
-su nobody -s /bin/bash -c "PATH=$PATH make -k check"
+su nobody -s /bin/bash -c "PATH=$PATH make -k check" \
     1> $TESTLOG 2> $TESTERR
 
 echo 'MAKE INSTALL'

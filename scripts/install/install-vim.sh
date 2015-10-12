@@ -6,6 +6,8 @@ DIR="`dirname \"$0\"`"
 
 source $DIR/dosetup.sh
 
+SRCDIR=vim74
+
 source $DIR/dotar.sh
 
 echo 'CONFIG'
@@ -30,7 +32,9 @@ echo 'MAKE INSTALL'
 make install \
     1> $INSTALLLOG 2> $INSTALLERR
 
-ln -sv vim /usr/bin/vi
+ln -sv vim /usr/bin/vi \
+    1>> $INSTALLLOG 2>> $INSTALLERR
+
 for L in  /usr/share/man/{,*/}man1/vim.1; do
     ln -sv vim.1 $(dirname $L)/vi.1 \
         1>> $INSTALLLOG 2>> $INSTALLERR
